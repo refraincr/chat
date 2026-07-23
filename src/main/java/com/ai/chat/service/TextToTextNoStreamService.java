@@ -53,7 +53,7 @@ public class TextToTextNoStreamService {
         // 添加当前消息
         builder.addUserMessage(chatBO.getMessage());
 
-        // 语音输出简洁,设定最大 token 数
+        // 语音输出简洁,设定最大 token
         builder.maxCompletionTokens(2048);
 
         ChatCompletionCreateParams params = builder.build();
