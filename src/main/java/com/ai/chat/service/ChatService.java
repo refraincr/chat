@@ -1,6 +1,7 @@
 package com.ai.chat.service;
 
 import com.ai.chat.bo.ChatBO;
+import com.ai.chat.bo.VoiceChatBO;
 import com.ai.chat.common.Token;
 import com.ai.chat.constants.BasePrompt;
 import com.ai.chat.constants.ModelName;
@@ -16,6 +17,7 @@ import com.openai.models.chat.completions.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
