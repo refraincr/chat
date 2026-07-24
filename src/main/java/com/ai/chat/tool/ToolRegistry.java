@@ -1,5 +1,6 @@
 package com.ai.chat.tool;
 
+import com.ai.chat.service.PhoneService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.core.JsonValue;
@@ -23,9 +24,16 @@ public class ToolRegistry {
     @Getter
     private final List<ChatCompletionTool> tools = new ArrayList<>();
 
-    public ToolRegistry() {
-        registerGetWeather(); // 注册工具
-        // ...
+    private final PhoneService phoneService;
+
+    public ToolRegistry(PhoneService phoneService) {
+        this.phoneService = phoneService;
+        registerGetWeather(); // 注册天气工具
+        registerPhoneSkip(); // 手机滑动工具
+        registerPhonePress(); // 点击工具
+        registerPhoneScreenCut(); // 截屏(未拉取)
+        registerPhonePower(); // 开关
+        registerPhoneHome(); // 回到主页
     }
 
     // 具体执行
@@ -44,7 +52,54 @@ public class ToolRegistry {
         }
     }
 
-    // 工具定义
+    // 滑动工具定义
+    private void registerPhoneSkip() {
+        String name = "phoneSkip";
+
+        FunctionParameters parameters = FunctionParameters.builder()
+                .putAdditionalProperty("type",JsonValue.from("object"))
+                .putAdditionalProperty("properties",JsonValue.from(Map.of(
+                        "x1",Map.of(
+                                "type","string",
+                                "description","初始x坐标"
+                        ),
+                        "y1",Map.of(
+                                "type","string",
+                                "description","初始y坐标"
+                        ),
+                        "x2",Map.of(
+                                "type","string",
+                                "description","目标x坐标"
+                        ),
+                        "y2",Map.of(
+                                "type","string",
+                                "description","目标y坐标"
+                        )
+                )))
+                .putAdditionalProperty("required",JsonValue.from(List.of("x1","y1","x2","y2")))
+                .build();
+
+        tools.add(ChatCompletionTool.
+                ofFunction(ChatCompletionFunctionTool.builder()
+                        .function(FunctionDefinition.builder()
+                                .name(name)
+                                .description("滑动手机屏幕")
+                                .parameters(parameters)
+                                .build())
+                        .build()
+                )
+        );
+
+        executors.put(name,args -> {
+            String x1 = args.has("x1") ? args.get("x1").asText() : "未知";
+            String y1 = args.has("y1") ? args.get("y1").asText() : "未知";
+            String x2 = args.has("x2") ? args.get("x2").asText() : "未知";
+            String y2 = args.has("y2") ? args.get("y2").asText() : "未知";
+
+            return phoneService.skip(x1,y1,x2,y2);
+        });
+    }
+
     private void registerGetWeather() {
         String name = "getWeather";
 
@@ -75,5 +130,104 @@ public class ToolRegistry {
             // ...
             return String.format("{\"location\":\"%s\",\"weather\":\"晴\",\"temperature\":\"26℃\"}", location);
         });
+    }
+
+    private void registerPhonePress() {
+        String name = "phonePress";
+
+        FunctionParameters parameters = FunctionParameters.builder()
+                .putAdditionalProperty("type",JsonValue.from("object"))
+                .putAdditionalProperty("properties",JsonValue.from(Map.of(
+                        "x",Map.of(
+                                "type","string",
+                                "description","要点击的x坐标"
+                        ),
+                        "y",Map.of(
+                                "type","string",
+                                "description","要点击的y坐标"
+                        )
+                )))
+                .putAdditionalProperty("required",JsonValue.from(List.of("x","y")))
+                .build();
+
+        tools.add(ChatCompletionTool.
+                ofFunction(ChatCompletionFunctionTool.builder()
+                        .function(FunctionDefinition.builder()
+                                .name(name)
+                                .description("点击手机屏幕")
+                                .parameters(parameters)
+                                .build())
+                        .build()
+                )
+        );
+
+        executors.put(name,args -> {
+            String x = args.has("x") ? args.get("x").asText() : "未知";
+            String y = args.has("y") ? args.get("y").asText() : "未知";
+            // ...
+            return phoneService.press(x,y);
+        });
+    }
+
+    private void registerPhoneScreenCut() {
+        String name = "phonePress";
+
+        FunctionParameters parameters = FunctionParameters.builder()
+                .build();
+
+        tools.add(ChatCompletionTool.
+                ofFunction(ChatCompletionFunctionTool.builder()
+                        .function(FunctionDefinition.builder()
+                                .name(name)
+                                .description("手机截屏")
+                                .parameters(parameters)
+                                .build())
+                        .build()
+                )
+        );
+
+        executors.put(name,args -> phoneService.screenCut());
+    }
+
+    // 模拟电源键
+    private void registerPhonePower() {
+        String name = "phonePower";
+
+        FunctionParameters parameters = FunctionParameters.builder()
+                .build();
+
+        tools.add(ChatCompletionTool.
+                ofFunction(ChatCompletionFunctionTool.builder()
+                        .function(FunctionDefinition.builder()
+                                .name(name)
+                                .description("手机息屏，或手机亮屏")
+                                .parameters(parameters)
+                                .build())
+                        .build()
+                )
+        );
+
+        executors.put(name,args -> phoneService.power());
+    }
+
+    // 模拟回到主页
+    private void registerPhoneHome() {
+        String name = "phoneHome";
+
+        FunctionParameters parameters = FunctionParameters.builder()
+                .build();
+
+        tools.add(ChatCompletionTool.
+                ofFunction(ChatCompletionFunctionTool.builder()
+                        .function(FunctionDefinition.builder()
+                                .name(name)
+                                .description("手机回到主页")
+                                .parameters(parameters)
+                                .build())
+                        .build()
+                )
+        );
+
+        executors.put(name,args -> phoneService.home());
     }
 }
